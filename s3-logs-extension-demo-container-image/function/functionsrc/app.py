@@ -4,9 +4,11 @@
 import json
 import os
 from pathlib import Path
+from datetime import datetime
+from random import randint
 
 def lambda_handler(event, context):
-	print(f"Function: Logging something which logging extension will send to S3")
+	print(json.dumps({"company_id":randint(0,100), "created_at":str(datetime.now())}))
 	return {
 		'statusCode': 200,
 		'body': json.dumps('Hello from Lambda!')

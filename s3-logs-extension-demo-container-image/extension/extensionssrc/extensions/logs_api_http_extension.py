@@ -86,9 +86,10 @@ class LogsAPIHTTPExtension():
 #                  This could be used to parse the log lines and only selectively send logs to S3, or amend for any other destination.
 
 #               1. The following line writes the entire batch to S3
-                s3_filename = (os.environ['AWS_LAMBDA_FUNCTION_NAME'])+'-'+(datetime.now().strftime('%Y-%m-%d-%H:%M:%S.%f'))+'.log'
+                s3_filename = "lambda_log/"+(os.environ['AWS_LAMBDA_FUNCTION_NAME'])+'-'+(datetime.now().strftime('%Y-%m-%d-%H:%M:%S.%f'))+'.log'
                 try:
-                    response = s3.Bucket(s3_bucket).put_object(Key=s3_filename, Body=str(batch))
+                    data = "\n".join(map(lambda x: x['record'].strip(), batch))
+                    response = s3.Bucket(s3_bucket).put_object(Key=s3_filename, Body=data)
                 except Exception as e:
                     raise Exception(f"Error sending log to S3 {e}") from e
 #               2. The following parses the batch and sends individual log line
@@ -107,7 +108,7 @@ _REGISTRATION_BODY = {
 
 # Subscribe to platform logs and receive them on ${local_ip}:4243 via HTTP protocol.
 
-TIMEOUT_MS = 1000 # Maximum time (in milliseconds) that a batch is buffered.
+TIMEOUT_MS = 10000 # Maximum time (in milliseconds) that a batch is buffered.
 MAX_BYTES = 262144 # Maximum size in bytes that the logs are buffered in memory.
 MAX_ITEMS = 10000 # Maximum number of events that are buffered in memory.
 
@@ -116,7 +117,7 @@ _SUBSCRIPTION_BODY = {
         "protocol": "HTTP",
         "URI": f"http://sandbox:{RECEIVER_PORT}",
     },
-    "types": ["platform", "function"],
+    "types": ["function"],
     "buffering": {
         "timeoutMs": TIMEOUT_MS,
         "maxBytes": MAX_BYTES,
